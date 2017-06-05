@@ -16,6 +16,8 @@
 
 #include <raspicam/raspicam_cv.h>
 
+#include "comPi.h"
+
 bool getBeaconAngles(float angles[4],bool valid[4]);
 
 using namespace cv;
@@ -31,6 +33,7 @@ VideoCapture cam;
 raspicam::RaspiCam_Cv Camera;
 int thresh1;
 int thresh2;
+ComPi Pi;
 
 int main()//int argc, char *argv[])
 {
@@ -49,11 +52,22 @@ int main()//int argc, char *argv[])
 	Camera.retrieve(image);
 	imshow("prev",image);
 	waitKey(0);
-    float angles[4];
-    bool valid[4];
-    while(getBeaconAngles(angles,valid)){
-    cout << "angle red:" << angles[0] << valid[0];
-    }
+	float angles[4]={0,0,0,0};
+	int iangles[4]; //in mili radians
+	bool valid[4];
+	while(getBeaconAngles(angles,valid)){
+		if(Pi.read_USB())
+		//if(1)
+		{
+			iangles[0] = 1000*angles[0];
+			iangles[1] = 1000*angles[1];
+			iangles[2] = 1000*angles[2];
+			iangles[3] = 1000*angles[3];
+			Pi.send_TrigData(iangles,valid);
+		}
+	   	// cout << "angle red:" << angles[0] << valid[0];
+	   	
+	}
 
     Camera.release();
     return 1;
@@ -187,7 +201,7 @@ bool getBeaconAngles(float angles[4],bool valid[4]){
 
        /******************************************** INPUT **************************************************/
        //from image
-       rawimage = imread("C:/images/beacons/img0.jpg", CV_LOAD_IMAGE_COLOR);
+       //rawimage = imread("C:/images/beacons/img0.jpg", CV_LOAD_IMAGE_COLOR);
       // ringMask(image);
 
        //from camera
@@ -205,50 +219,52 @@ bool getBeaconAngles(float angles[4],bool valid[4]){
         * if no suitable point has been found
         * declare beacon as unvalid
         * */
-
+		points.clear();
        // detect red /// 5 75 175 5
        if(detectOneColor(image,0,70,100,5,&tempPoint)){//0,120,130,30
        points.push_back(tempPoint);
        valid[0]=true;
        }else{
-           points.push_back(Point2i{0,0});
+           points.push_back(Point2i(0,0));
            valid[0]=false;
        }
-
+		tempPoint = Point2i(0,0);
        //detect green 80 80 130 20
        if(detectOneColor(image,80,80,130,20,&tempPoint)){//70,50,110,30
        points.push_back(tempPoint);
        valid[1]=true;
        }else{
-           points.push_back(Point2i{0,0});
+           points.push_back(Point2i(0,0));
            valid[1]=false;
        }
+		tempPoint = Point2i(0,0);
 
        // detect blue 110 100 115 20
        if(detectOneColor(image,110,100,115,20,&tempPoint)){//115,90,55,30
        points.push_back(tempPoint);
        valid[2]=true;
        }else{
-           points.push_back(Point2i{0,0});
+           points.push_back(Point2i(0,0));
            valid[2]=false;
        }
+		tempPoint = Point2i(0,0);
        // detect yellow 30 8 200 5
        //detectOneColor(image,21,30,80,30,&temp_lines);
        if(detectOneColor(image,30,20,125,5,&tempPoint)){
        points.push_back(tempPoint);
        valid[3]=true;
        }else{
-           points.push_back(Point2i{0,0});
+           points.push_back(Point2i(0,0));
            valid[3]=false;
        }
 
        /********************************************** Caculation of Angles ****************************/
        for (unsigned int i = 0; i < points.size(); ++i)
         {
+             //   std::cout << "angles" << i << " " << angles[i]*180/3.1415 << "\n";
             //only do something if the line is valid
            if(valid[i]){
                 angles[i] = atan2(points[i].x-imgcenter.x,points[i].y-imgcenter.y);
-                std::cout << "angle found for i " << i << " " << angles[i]*180/3.1415 << "\n";
                 if(displaycounter>10)
                 cv::circle(image,points[i],5,cv::Scalar(0, 255, 0), 5);
             }
