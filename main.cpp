@@ -36,13 +36,7 @@ int main()//int argc, char *argv[])
 {
  //   QCoreApplication a(argc, argv);
 
-    /****************************************************/
- //   namedWindow( "desired color", CV_WINDOW_AUTOSIZE );
-      /// Create a Trackbar for user to enter threshold
- //   createTrackbar( "hueValue:", "desired color", &hueValue, 255, NULL );
- //   createTrackbar( "minSaturation:", "desired color", &minSaturation, 255, NULL );
- //   createTrackbar( "minValue:", "desired color", &minValue, 255, NULL );
- 
+    /****************************************************/ 
 
     //set camera params
     Camera.set( CV_CAP_PROP_FORMAT, CV_8UC3 );
