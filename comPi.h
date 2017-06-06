@@ -6,14 +6,14 @@
 #include "comserial.h"
 
 using namespace std;
-
+enum {Data,Start, Shutdown};
 class ComPi
 {
     public:
         ComPi();
         virtual ~ComPi();
         void send_TrigData(int angles[4], bool valid[4]);
-	bool read_USB();
+	int read_USB();
     private:
         int sendToPi();
         void getChecksum();

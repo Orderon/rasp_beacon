@@ -50,13 +50,14 @@ int main()//int argc, char *argv[])
 	Mat image;
 	Camera.grab();
 	Camera.retrieve(image);
-	imshow("prev",image);
-	waitKey(0);
 	float angles[4]={0,0,0,0};
 	int iangles[4]; //in mili radians
 	bool valid[4];
+//	while(Pi.read_USB() != Start){} 		//wait for starting command
+
 	while(getBeaconAngles(angles,valid)){
-		if(Pi.read_USB())
+		int instructions = Pi.read_USB();
+		if(instructions == Data)
 		//if(1)
 		{
 			iangles[0] = 1000*angles[0];
@@ -66,7 +67,10 @@ int main()//int argc, char *argv[])
 			Pi.send_TrigData(iangles,valid);
 		}
 	   	// cout << "angle red:" << angles[0] << valid[0];
-	   	
+		if(instructions == Shutdown){
+			cout << "shuting down\n";
+			system("sudo shutdown -h now");
+		}
 	}
 
     Camera.release();

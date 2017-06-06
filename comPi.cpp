@@ -22,13 +22,16 @@ void ComPi::send_TrigData(int angles[4], bool valid[4]){
 	sendToPi();
 	return;
 }
-bool ComPi::read_USB(){
+int ComPi::read_USB(){
 	pi->read();
-    if(pi->newData)
+    if(pi->newData){
 	if(strcmp(pi->receivedChars,"send"))
-		return true;
-	else{
-		return false;
+		return Data;
+	else if(strcmp(pi->receivedChars,"start"))
+		return Start;
+	else if(strcmp(pi->receivedChars,"shutdown"))
+		return Shutdown;
+	else
 	cout << "something weird received...";
 	}
     else
