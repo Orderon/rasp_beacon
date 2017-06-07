@@ -12,7 +12,7 @@ class ComPi
     public:
         ComPi();
         virtual ~ComPi();
-        void send_TrigData(int angles[4], bool valid[4]);
+        void send_TrigData(int pos[3]);
 	void read_USB();
 	int state = None;
     private:

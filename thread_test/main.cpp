@@ -9,6 +9,7 @@
 //#include <QDebug>
 //#include <QElapsedTimer>
 #include <math.h>
+#include <mutex>
 
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>
@@ -18,6 +19,7 @@
 #include <thread>         		// std::thread
 
 #include "comPi.h"
+#include "triangulation.h"
 
 
 bool getBeaconAngles(float angles[4],bool valid[4]);
@@ -38,13 +40,24 @@ int thresh2;
 ComPi Pi;
 
 float angles[4]={0,0,0,0}; //in rad
-int iangles[4]; //in mili radians
 bool valid[4];
+float position[3];
+int ipos[3]; //in cm, cm, mili radians
+std::mutex mainmtx;           // mutex for critical section
 
 void loop1(){
+
+    Beacon beacon[4] {  { 1, 400,-400, "red"},
+                        { 2,-400,-400, "green"},
+                        { 3,-400, 400, "blue"},
+			{ 4, 400, 400, "yellow"} };
+
 	while(Pi.state != Shutdown){
 	//	cout << "loop1 is working" << endl;
 		getBeaconAngles(angles,valid);
+		mainmtx.lock();
+		beaconLocaliseWith3_caller(beacon, angles, valid, position);
+		mainmtx.unlock();
 	}
 }
 
@@ -55,11 +68,12 @@ void loop2(){
 		if(Pi.state == Data)
 		//if(1)
 		{
-			iangles[0] = 1000*angles[0];
-			iangles[1] = 1000*angles[1];
-			iangles[2] = 1000*angles[2];
-			iangles[3] = 1000*angles[3];
-			Pi.send_TrigData(iangles,valid);
+		mainmtx.lock();
+			ipos[0] = (int)position[0];
+			ipos[1] = (int)position[1];
+			ipos[2] = (int)(1000*position[2]);
+		mainmtx.unlock();
+			Pi.send_TrigData(ipos);
 		}
 	   	// cout << "angle red:" << angles[0] << valid[0];
 		if(Pi.state == Shutdown){
@@ -284,7 +298,7 @@ bool getBeaconAngles(float angles[4],bool valid[4]){
        /********************************************** Caculation of Angles ****************************/
        for (unsigned int i = 0; i < points.size(); ++i)
         {
-             //   std::cout << "angles" << i << " " << angles[i]*180/3.1415 << "\n";
+            //   std::cout << "angles" << i << " " << angles[i]*180/3.1415 << "\n";
             //only do something if the line is valid
            if(valid[i]){
                 angles[i] = atan2(points[i].x-imgcenter.x,points[i].y-imgcenter.y);
@@ -298,8 +312,8 @@ bool getBeaconAngles(float angles[4],bool valid[4]){
        //cv::circle(image,imgcenter,40,cv::Scalar(0, 255, 0), 2);
 
        if(displaycounter>10){
-           imshow( "output", image );
-           int key = waitKey(20);
+        imshow( "output", image );
+        int key = waitKey(20);
 	static int j=0;
     	//save image 
 	std::ostringstream oss;

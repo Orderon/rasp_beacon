@@ -17,10 +17,10 @@ ComPi::~ComPi()
     //dtor
 }
 
-void ComPi::send_TrigData(int angles[4], bool valid[4]){
+void ComPi::send_TrigData(int pos[3]){
 	// empty buffer
 	buffer.str(std::string(""));
-	buffer << "angles " << angles[0]<< " "<< angles[1]<< " "<< angles[2] << " "<< angles[3] << " "<< valid[0] << " " << valid[1] << " "<< valid[2] << " "<< valid[3]<< " ";
+	buffer << "pos " << pos[0]<< " "<< pos[1]<< " "<< pos[2];
 	toSend = buffer.str();
 	//cout << buffer.str();
 	getChecksum();
